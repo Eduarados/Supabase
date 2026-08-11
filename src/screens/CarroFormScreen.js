@@ -13,12 +13,12 @@ import { supabase } from '../lib/supabase';
 import { colors } from '../theme/colors';
 
 export default function CarroFormScreen({ route, navigation }) {
-  const { placa: placaParam, proprietarioId } = route.params;
-  const isEditing = !!placaParam;
+  const { id: idParam, donoId } = route.params;
+  const isEditing = !!idParam;
 
-  const [placa, setPlaca] = useState(placaParam ?? '');
-  const [modelo, setModelo] = useState('');
-  const [marca, setMarca] = useState('');
+  const [id, setId] = useState(idParam ?? '');
+  const [nome, setNome] = useState('');
+  const [raca, setRaca] = useState('');
   const [loading, setLoading] = useState(isEditing);
   const [saving, setSaving] = useState(false);
 
@@ -27,24 +27,24 @@ export default function CarroFormScreen({ route, navigation }) {
 
     (async () => {
       const { data, error } = await supabase
-        .from('carros')
+        .from('pet')
         .select('*')
-        .eq('placa', placaParam)
+        .eq('id', idParam)
         .single();
 
       if (error) {
         Alert.alert('Não foi possível carregar', error.message);
       } else if (data) {
-        setModelo(data.modelo ?? '');
-        setMarca(data.marca ?? '');
+        setNome(data.nome ?? '');
+        setEspecie(data.especie ?? '');
       }
       setLoading(false);
     })();
-  }, [placaParam]);
+  }, [idParam]);
 
   const handleSave = async () => {
-    if (!placa.trim() || !modelo.trim()) {
-      Alert.alert('Faltam campos', 'Informe ao menos a placa e o modelo do carro.');
+    if (!id.trim() || !nome.trim()) {
+      Alert.alert('Faltam campos', 'Informe ao menos o campo nome');
       return;
     }
 
@@ -52,18 +52,16 @@ export default function CarroFormScreen({ route, navigation }) {
 
     let error;
     if (isEditing) {
-      // A placa é a chave primária: em edição ela fica travada e não é reenviada
       ({ error } = await supabase
-        .from('carros')
-        .update({ modelo: modelo.trim(), marca: marca.trim() || null })
-        .eq('placa', placaParam));
+        .from('pet')
+        .update({ nome: nome.trim(), especie: especie.trim() || null })
+        .eq('id', idParam));
     } else {
-      // Vínculo automático com o proprietario atual, vindo da tela de detalhes
-      ({ error } = await supabase.from('carros').insert({
-        placa: placa.trim().toUpperCase(),
-        modelo: modelo.trim(),
-        marca: marca.trim() || null,
-        proprietario_id: proprietarioId,
+      ({ error } = await supabase.from('pet').insert({
+        id: id.trim().toUpperCase(),
+        nome: nome.trim(),
+        especie: especie.trim() || null,
+        dono_id: donoId,
       }));
     }
 
